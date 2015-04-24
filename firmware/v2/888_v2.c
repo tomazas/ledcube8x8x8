@@ -10,9 +10,7 @@ volatile uchar temp = 1;
 volatile uchar layer = 0;
 
 #define FOSC        12000000L 	// mcu clock - 12MHz
-#define BAUD_RATE 	9600
-#define BAUD        (256 - FOSC / 32 / BAUD_RATE)
-#define MAX_BUFFER 32
+#define MAX_BUFFER  32					// UART ring buffer size
 
 volatile bit busy;
 volatile uchar io_buffer[MAX_BUFFER];
@@ -21,18 +19,7 @@ volatile int io_write = 0;
 
 ///////////////////////////////////////////////////////////
 
-void init_uart()
-{
-    SCON = 0x50;                //set UART mode as 8-bit variable baudrate
-    TMOD = 0x20;                //timer1 as 8-bit auto reload mode
-    AUXR = 0x40;                //timer1 work at 1T mode
-    TH1 = TL1 = BAUD;           //115200 bps
-    TR1 = 1;										//timer1 start
-		ES = 1;                 //Enable UART interrupt
-    EA = 1;                 //Open master interrupt switch
-}
-
-void uart_isr() interrupt 4 using 1
+void uart_isr() interrupt 4
 {
     if (RI)
     {
@@ -59,15 +46,6 @@ void send_uart(uchar dat)
 
 ///////////////////////////////////////////////////////////
 
-/*void send_uart(uchar dat)
-{
-    while (!TI);                //wait pre-data sent
-    TI = 0;                     //clear TI flag
-    SBUF = dat;                 //send current data
-}*/
-
-///////////////////////////////////////////////////////////
-
 void send_str(char* s)
 {
 	while (*s) {
@@ -76,13 +54,6 @@ void send_str(char* s)
 }
 
 ///////////////////////////////////////////////////////////
-
-/*uchar recv_uart()
-{
-    while (!RI);                //wait receive complete
-    RI = 0;                     //clear RI flag
-    return SBUF;                //return receive data
-}*/
 
 int recv_uart() {
 	uint value;
@@ -97,7 +68,7 @@ int recv_uart() {
 
 ///////////////////////////////////////////////////////////
 
-void delay5us(void)   //误差 -0.026765046296us STC 1T 22.1184Mhz
+void delay5us(void)
 {
 	unsigned char a,b;
 	for(b=7; b>0; b--)
@@ -110,7 +81,7 @@ void delay(uint i)
 {
 	while (i--) {
 		delay5us();
-	}//12t的mcu 注释这个延时即可
+	}
 }
 	
 ///////////////////////////////////////////////////////////
@@ -163,34 +134,49 @@ void swap()
 	clear(temp,0);
 }
 
+///////////////////////////////////////////////////////////
+
 void main()
 {
 	int value;
-	uchar i, 
-			started = 0, 
+	uchar started = 0, 
 			received = 0;
+
+	//init UART 57600bps@12.000MHz
+	PCON |= 0x80; //Enable SMOD bit
+	SCON = 0x50;  //8-bit variable baudrate, no parity bit, 1 stop bit
+	AUXR |= 0x04;	//BRT's clock is Fosc (1T)
 	
-	IE = 0x82;
-	TCON = 0x01;
-	TH0 = 0xc0;
+	BRT = 0xF3;		// BRT's reload value
+	AUXR |= 0x01; // Use BRT as baudrate generator
+	AUXR |= 0x10; // BRT running
+	
+	ES = 1;  // enable UART interrupt
+	
+	// setup timer0
+	TH0 = 0xc0;		// reload value
 	TL0 = 0;
 	TR0 = 1;			// timer0 start
+	
+	ET0 = 1; // enable timer0 interrupt
+	EA = 1;  // enable global interrupts
 	
 	clear(frame, 0);
 	clear(temp, 0);
 	
-	init_uart();
+	line(0,0,0xFF); //TODO: remove test line
 
 	while(1) 
 	{
 		value = recv_uart();
 		if (value == -1) continue;
+		send_uart(value);
 		
 		if (!started) 
 		{
 			if (value == 0xF2) { // start receiving batch
 				started = 1;
-				send_str("started");
+				//send_str("started");
 			} //else if (value == 0xF0) { // clear only 
 				//value = recv_uart();
 				//clear(temp,value);
@@ -208,12 +194,12 @@ void main()
 			{
 				display[temp][received/8][received%8] = value;
 				received++;
-				send_uart(value);
+				//send_uart(value);
 			}
 			
 			if (received >= 64) // overflow?
 			{
-				send_str("re-paint");
+				//send_str("re-paint");
 				/*
 				for (i=0; i<10; i++) {
 					delay(8000);
@@ -235,7 +221,7 @@ void main()
 //P1;  //uln2803
 //P2;  //573 LE
 
-void print() interrupt 1
+void print() interrupt 1 // timer0 interrupt
 {
 	uchar y;
 	P1 = 0;
@@ -254,7 +240,7 @@ void print() interrupt 1
 	else
 		layer = 0;
 	
-	// reset timer counter
+	// reset timer0
 	TH0 = 0xc0;
 	TL0 = 0;
 }
