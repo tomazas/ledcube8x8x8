@@ -1,0 +1,10 @@
+双击 ：3D8S_alpha.exe  打开 光立方上位机软件， 
+选择COM口---然后选择 57600---点击连接（CONNECT）---选择旁边的任意动画就可以动起来了。
+ 
+
+上位机软件运行不起来的 提示错误。请安装微软组件：Net Framework 4 Client Profile  
+
+新版上位机程序，使用强大的 Microsoft Visual Studio 2010 基于 .Net Framework 4.0 编写。
+如果无法运行，需要下载 .Net Framework 4 Client Profile  
+
+下载地址：http://www.microsoft.com/downloads/zh-cn/details.aspx?FamilyID=e5ad0459-cbcc-4b4f-97b6-fb17111cf544
