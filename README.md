@@ -19,9 +19,22 @@ Software such STC-ISP is required to transfer the hex file (machinecode) to the 
 `Download here`: http://www.stcmcu.com/STCISP/stc-isp-15xx-v6.85.zip
 
 ##### Serial connection: 
+* USB-2-TTL converter/adapter/module can be used to connect to PC (e.g. search eBay)
 * Parameters: baud - 9600 bps, 1 stop bit, no parity
 * Cube UART pins: VCC, GND, P30(RXD), P31(TXD)
 
+##### Programming STC
+* Connect serial module to ledcube serial pins
+* Open STC-ISP and select STC12C5A60S2 and serial port
+* Select HEX file: ledcube8.hex and press `Download/program`
+* Reset power to MCU to start programming
+
+![Alt text](/help/howto_stc.png "Programming the STC mcu")
+
+![Alt text](/help/programming_ok.png "Programming successful")
+
 ##### Extra - C51 project
 Keil uVision C51 project file is also available in the `firmware/v2` directory if compiling the source code is a must.
-`Download tools here`: https://www.keil.com/demo/eval/c51.htm
+Keil C51 compiler tools are required to open the project.
+
+`Download here`: https://www.keil.com/demo/eval/c51.htm
