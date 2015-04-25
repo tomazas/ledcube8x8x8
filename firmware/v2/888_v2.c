@@ -9,61 +9,137 @@ volatile uchar frame = 0;
 volatile uchar temp = 1;
 volatile uchar layer = 0;
 
-#define FOSC        12000000L 	// mcu clock - 12MHz
-#define MAX_BUFFER  32					// UART ring buffer size
+#define MAX_BUFFER  128					// UART ring buffer size
+//#define TX_ENABLED
 
 volatile bit busy;
-volatile uchar io_buffer[MAX_BUFFER];
-volatile int io_read = 0;
-volatile int io_write = 0;
+volatile uchar rx_buffer[MAX_BUFFER];
+volatile int rx_read = 0;
+volatile int rx_write = 0;
+volatile int rx_in = 0;
+
+#ifdef TX_ENABLED
+	volatile uchar tx_buffer[MAX_BUFFER];
+	volatile int tx_read = 0;
+	volatile int tx_write = 0;
+	volatile int tx_out = 0;
+#endif
 
 ///////////////////////////////////////////////////////////
 
 void uart_isr() interrupt 4
 {
-    if (RI)
+		EA = 0;
+	
+    if (RI)	// received a byte
     {
         RI = 0;             //Clear receive interrupt flag
 			
-				if (!((io_write+1)%MAX_BUFFER == io_read)) {
-					io_buffer[io_write] = SBUF;
-					io_write = (io_write+1)%MAX_BUFFER;
+				if (!(rx_write == rx_read && rx_in > 0)) 
+				{
+					rx_buffer[rx_write] = SBUF;
+					rx_write = (rx_write+1)%MAX_BUFFER;
+					rx_in++;
 				}
     }
-    if (TI)
-    {
+#ifdef TX_ENABLED
+		else if (TI) // byte was sent
+		{
         TI = 0;             //Clear transmit interrupt flag
-        busy = 0;           //Clear transmit busy flag
+			
+				if (tx_out > 0) 
+				{
+					SBUF = tx_buffer[tx_read];
+					tx_read = (tx_read+1)%MAX_BUFFER;
+					tx_out--;
+				}
     }
-}
-
-void send_uart(uchar dat)
-{
-    while (busy);           //Wait for the completion of the previous data is sent
-    busy = 1;
-    SBUF = dat;             //Send data to UART buffer
+#endif
+		
+		EA = 1;
 }
 
 ///////////////////////////////////////////////////////////
-
-void send_str(char* s)
-{
-	while (*s) {
-		send_uart(*s++);
+#ifdef TX_ENABLED
+	int send_uart(uchar dat)
+	{
+		int res;
+		EA = 0;
+			
+		if (tx_read == tx_write && tx_out > 0) 
+		{
+			// buffer is full
+			res = -1;
+		} 
+		else 
+		{
+			tx_buffer[tx_write] = dat;
+			tx_write = (tx_write+1)%MAX_BUFFER;
+			tx_out++;
+			res = 0;
+			
+			if (TI == 0) 
+			{
+				TI = 1; // instruct to run interrupt & send the data
+			}
+		}
+			
+		EA = 1;
+		return res;
 	}
-}
 
+	///////////////////////////////////////////////////////////
+
+	void send_str(char* s)
+	{
+		while (*s) 
+		{
+			while (send_uart(*s++) != 0) 
+			{
+				_nop_();
+			}
+		}
+	}
+
+	///////////////////////////////////////////////////////////
+
+	void send_serial(uchar dat) 
+	{
+		while(send_uart(dat) != 0) 
+		{
+			_nop_();
+		}
+	}
+#endif
 ///////////////////////////////////////////////////////////
 
-int recv_uart() {
-	uint value;
-	if (io_write-io_read == 0) { 
-		return -1;
+int recv_uart() 
+{
+	int value;
+	EA = 0;
+	
+	if (rx_in == 0) { 
+		value = -1;
+	} else {	
+		value = rx_buffer[rx_read];
+		rx_read = (rx_read+1)%MAX_BUFFER;
+		rx_in--;
 	}
 	
-	value = io_buffer[io_read];
-	io_read = (io_read+1)%MAX_BUFFER;
+	EA = 1;
 	return value;
+}
+
+///////////////////////////////////////////////////////////
+
+uchar read_serial() 
+{
+	int value;
+	while ((value = recv_uart()) == -1) 
+	{
+		_nop_();
+	}
+	return (uchar)(value & 0xFF);
 }
 
 ///////////////////////////////////////////////////////////
@@ -141,15 +217,14 @@ void main()
 	int value;
 	uchar started = 0, 
 			received = 0;
-
-	//init UART 57600bps@12.000MHz
-	PCON |= 0x80; //Enable SMOD bit
-	SCON = 0x50;  //8-bit variable baudrate, no parity bit, 1 stop bit
-	AUXR |= 0x04;	//BRT's clock is Fosc (1T)
 	
-	BRT = 0xF3;		// BRT's reload value
-	AUXR |= 0x01; // Use BRT as baudrate generator
-	AUXR |= 0x10; // BRT running
+	// 9600bps@12.000MHz
+	PCON &= 0x7F;		//Baudrate no doubled
+	SCON = 0x50;		//8bit and variable baudrate, 1 stop bit, no parity
+	AUXR |= 0x04;		//BRT's clock is Fosc (1T)
+	BRT = 0xD9;			//Set BRT's reload value
+	AUXR |= 0x01;		//Use BRT as baudrate generator
+	AUXR |= 0x10;		//BRT running
 	
 	ES = 1;  // enable UART interrupt
 	
@@ -168,25 +243,14 @@ void main()
 
 	while(1) 
 	{
-		value = recv_uart();
-		if (value == -1) continue;
-		send_uart(value);
+		value = read_serial();
 		
 		if (!started) 
 		{
 			if (value == 0xF2) { // start receiving batch
 				started = 1;
-				//send_str("started");
-			} //else if (value == 0xF0) { // clear only 
-				//value = recv_uart();
-				//clear(temp,value);
-				//swap();
-				//print();
-			//} else if (value == 0xF1) { // light up one column
-			//	column = recv_uart();
-				//value = recv_uart();
-			//	line(column%8,column/8,value);
-			//}
+				received = 0;
+			}
 		} 
 		else
 		{
@@ -194,22 +258,12 @@ void main()
 			{
 				display[temp][received/8][received%8] = value;
 				received++;
-				//send_uart(value);
 			}
 			
 			if (received >= 64) // overflow?
 			{
-				//send_str("re-paint");
-				/*
-				for (i=0; i<10; i++) {
-					delay(8000);
-					point(1,1,1,1);
-					delay(8000);
-					point(1,1,1,0);
-				}*/
-				
 				swap();
-				received = started = 0;	
+				started = 0;
 			}
 		}
 	}
