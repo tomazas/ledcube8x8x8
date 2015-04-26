@@ -38,3 +38,11 @@ Keil uVision C51 project file is also available in the `firmware/v2` directory i
 Keil C51 compiler tools are required to open the project.
 
 `Download here`: https://www.keil.com/demo/eval/c51.htm
+
+LED Cube control
+---------
+![Control program](https://raw.githubusercontent.com/tomazas/DotMatrixJava/master/help/program_view.png)
+
+The cube (with Firmware v2) can be controlled over serial port/console with: [PC Program](https://github.com/tomazas/DotMatrixJava). Program allows to create animations and playback them.
+
+
