@@ -14,7 +14,7 @@ So the cube can be controlled with Arduino/Atmega or simple PC serial console.
 `Note`: The ledcube UART control mode is activated once the first command comes over serial connection.
 
 The new firmware can be flashed/written to STC MCU through UART/serial connection. 
-Software such STC-ISP is required to transfer the hex file (machinecode) to the STc microcontroller. 
+Software such as STC-ISP is required to transfer the hex file (machinecode) to the STC microcontroller. 
 
 `Download here`: http://www.stcmcu.com/STCISP/stc-isp-15xx-v6.85.zip
 
