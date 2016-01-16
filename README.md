@@ -39,6 +39,11 @@ Keil C51 compiler tools are required to open the project.
 
 `Download here`: https://www.keil.com/demo/eval/c51.htm
 
+The required STC mcu C headers need to be installed from the STC-ISP tool via "Keil ICE Settings" tab.
+Use the "Add MCU type to Keil" button and point to your Keil install directory.
+
+![Alt text](/help/install_headers.png "Install required STC headers to Keil")
+
 LED Cube control
 ---------
 ![Control program](https://raw.githubusercontent.com/tomazas/DotMatrixJava/master/help/program_view.png)
