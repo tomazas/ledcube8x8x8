@@ -48,15 +48,16 @@ Use the "Add MCU type to Keil" button and point to your Keil install directory.
 
 ![Alt text](/help/install_headers.png "Install required STC headers to Keil")
 
-Firmware v3
+Firmware v2 for SDCC
 ---------
 SDCC compiler supports compiling code for STC12C5A60S2. </br>
-Adapted version of v2 firmware for SDCC can be found in `firmware/v3` folder (created by Michael Knyazev).
+Adapted version of v2 firmware for SDCC can be found in `firmware/v2-sdcc` folder (created by Michael Knyazev).
 
 LED Cube control
 ---------
 ![Control program](https://raw.githubusercontent.com/tomazas/DotMatrixJava/master/help/program_view.png)
 
-The cube (with Firmware v2) can be controlled over serial port/console with: [PC Program](https://github.com/tomazas/DotMatrixJava). Program allows to create animations and playback them.
+The cube (with Firmware v2) can be controlled over serial port/console with: [PC Program](https://github.com/tomazas/DotMatrixJava). </br>
+Program allows to create animations and playback them.
 
 
