@@ -33,6 +33,10 @@ Software such as STC-ISP is required to transfer the hex file (machinecode) to t
 
 ![Alt text](/help/programming_ok.png "Programming successful")
 
+##### Alternative programming/flashing tool: STCGAL
+If you have trouble with the official STC-ISP, try using:
+https://github.com/grigorig/stcgal
+
 ##### Extra - C51 project
 Keil uVision C51 project file is also available in the `firmware/v2` directory if compiling the source code is a must.
 Keil C51 compiler tools are required to open the project.
@@ -43,6 +47,11 @@ The required STC mcu C headers need to be installed from the STC-ISP tool via "K
 Use the "Add MCU type to Keil" button and point to your Keil install directory.
 
 ![Alt text](/help/install_headers.png "Install required STC headers to Keil")
+
+Firmware v3
+---------
+SDCC compiler supports compiling code for STC12C5A60S2. </br>
+Adapted version of v2 firmware for SDCC can be found in `firmware/v3` folder (created by Michael Knyazev).
 
 LED Cube control
 ---------
