@@ -16,7 +16,7 @@ So the cube can be controlled with Arduino/Atmega or simple PC serial console.
 The new firmware can be flashed/written to STC MCU through UART/serial connection. 
 Software such as STC-ISP is required to transfer the hex file (machinecode) to the STC microcontroller. 
 
-`Download here`: http://www.stcmcu.com/STCISP/stc-isp-15xx-v6.85.zip
+`Download here`: http://www.stcmcudata.com/STCISP/stc-isp-15xx-v6.86R.zip
 
 ##### Serial connection: 
 * USB-2-TTL converter/adapter/module can be used to connect to PC (e.g. search eBay)
@@ -24,9 +24,9 @@ Software such as STC-ISP is required to transfer the hex file (machinecode) to t
 * Cube UART pins: VCC, GND, P30(RXD), P31(TXD)
 
 ##### Programming STC
-* Connect serial module to ledcube serial pins
+* Connect serial module to ledcube serial pins, RX to TX, TX to RX
 * Open STC-ISP and select STC12C5A60S2 and serial port
-* Select HEX file: ledcube8.hex and press `Download/program`
+* Select HEX file: ledcube8.hex and press `Download/Program` or `Re-Program`
 * Reset power to MCU to start programming
 
 ![Alt text](/help/howto_stc.png "Programming the STC mcu")
