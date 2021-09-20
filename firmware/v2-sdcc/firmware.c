@@ -68,7 +68,7 @@ int send_uart(uchar dat)
     if (tx_read == tx_write && tx_out > 0) {
         // buffer is full
         res = -1;
-    } 
+    }
     else {
         tx_buffer[tx_write] = dat;
         tx_write = (tx_write+1)%MAX_BUFFER;
@@ -88,9 +88,9 @@ int send_uart(uchar dat)
 //  send a string via uart [is blocking]
 void send_str(char* s)
 {
-    while (*s) 
+    while (*s)
     {
-        while (send_uart(*s++) != 0) 
+        while (send_uart(*s++) != 0)
         {
             __asm__("nop");
         }
@@ -99,44 +99,44 @@ void send_str(char* s)
 
 ///////////////////////////////////////////////////////////
 // send a byte via uart [is blocking]
-void send_serial(uchar dat) 
+void send_serial(uchar dat)
 {
-    while(send_uart(dat) != 0) 
+    while(send_uart(dat) != 0)
     {
         __asm__("nop");
     }
 }
 #endif
-    
+
 ///////////////////////////////////////////////////////////
 // check if a byte is available in uart receive buffer
 // returns -1 if not, otherwise - the byte value [non blocking]
-int recv_uart() 
+int recv_uart()
 {
     int value;
     EA = 0;
-    
-    if (rx_in == 0) 
-    { 
+
+    if (rx_in == 0)
+    {
         value = -1;
-    } 
-    else 
-    {   
+    }
+    else
+    {
         value = rx_buffer[rx_read];
         rx_read = (rx_read+1)%MAX_BUFFER;
         rx_in--;
     }
-    
+
     EA = 1;
     return value;
 }
 
 ///////////////////////////////////////////////////////////
 // blocks until a byte is received from uart, returns the byte
-uchar read_serial() 
+uchar read_serial()
 {
     int value;
-    while ((value = recv_uart()) == -1) 
+    while ((value = recv_uart()) == -1)
     {
         __asm__("nop");
     }
@@ -156,15 +156,15 @@ void delay5us(void) // some magic wait - as in original code
 
 void delay(uint i)
 {
-    while (i--) 
+    while (i--)
     {
         delay5us();
     }
 }
-    
+
 ///////////////////////////////////////////////////////////
 // assign all cube registers/rows the same value, usually 0, idx - 0/1 for front/back buffer
-void clear(char idx, char val) 
+void clear(char idx, char val)
 {
     uchar i,j;
     for (j = 0; j < 8; ++j) {
@@ -189,16 +189,16 @@ void point(uchar x, uchar y, uchar z, uchar enable)
 }
 
 ///////////////////////////////////////////////////////////
-// sets one row of a layer to the specified value, 
+// sets one row of a layer to the specified value,
 // i.e. value = 0 (all 8 leds off), value = 0xFF (all 8 leds on), etc.
-void line(uchar y, uchar z, uchar value) 
+void line(uchar y, uchar z, uchar value)
 {
     display[frame][z][y] = value;
 }
 
 ///////////////////////////////////////////////////////////
 // swap back buffer with front buffer (i.e. show contents of back buffer)
-void swap() 
+void swap()
 {
     if (frame) {
         frame = 0;
@@ -208,7 +208,7 @@ void swap()
         frame = 1;
         temp = 0;
     }
-    
+
     clear(temp, 0); // start painting on new clean backbuffer
 }
 
@@ -251,45 +251,45 @@ void cirp(char cpp, uchar dir, uchar le)
 
 ///////////////////////////////////////////////////////////
 // default animation included in with the ledcube with some modifications
-__bit flash_2() 
+__bit flash_2()
 {
     uchar i;
-    for (i=129; i>0; i--) 
+    for (i=129; i>0; i--)
     {
         if (rx_in > 0) return 1; // RX command detected
         cirp(i-2,0,1);
         delay(8000);
         cirp(i-1,0,0);
     }
-    
+
     delay(8000);
-    
-    for (i=0; i<136; i++) 
+
+    for (i=0; i<136; i++)
     {
         if (rx_in > 0) return 1; // RX command detected
         cirp(i,1,1);
         delay(8000);
         cirp(i-8,1,0);
     }
-    
+
     delay(8000);
-    
-    for (i=129; i>0; i--) 
+
+    for (i=129; i>0; i--)
     {
         if (rx_in > 0) return 1; // RX command detected
         cirp(i-2,0,1);
         delay(8000);
     }
-    
+
     delay(8000);
-    
-    for (i=0; i<128; i++) 
+
+    for (i=0; i<128; i++)
     {
         if (rx_in > 0) return 1; // RX command detected
         cirp(i-8,1,0);
         delay(8000);
     }
-    
+
     delay(60000);
     return 0;
 }
@@ -299,12 +299,12 @@ __bit flash_2()
 void main()
 {
     int value;
-    
+
     __bit uart_detected = 0;
     __bit frame_started = 0;
-    
+
     uchar received = 0;
-    
+
     // init uart - 9600bps@12.000MHz MCU
     PCON &= 0x7F;       //Baudrate no doubled
     SCON = 0x50;        //8bit and variable baudrate, 1 stop __bit, no parity
@@ -312,35 +312,35 @@ void main()
     BRT = 0xD9;         //Set BRT's reload value
     AUXR |= 0x01;       //Use BRT as baudrate generator
     AUXR |= 0x10;       //BRT running
-    
+
     ES = 1;  // enable UART interrupt
-    
+
     // setup timer0
     TH0 = 0xc0;     // reload value
     TL0 = 0;
     TR0 = 1;        // timer0 start
-    
+
     ET0 = 1; // enable timer0 interrupt
     EA = 1;  // enable global interrupts
-    
+
     // clear main buffer and back buffer
     clear(frame, 0);
     clear(temp, 0);
 
-    while(1) 
+    while(1)
     {
         if (uart_detected) // is the cube is being controlled via uart?
         {
             value = read_serial(); // blocks until a byte comes
-            
-            if (!frame_started) 
+
+            if (!frame_started)
             {
                 if (value == 0xF2) // start receiving batch
-                { 
-                    frame_started = 1; // begin reiving frame data
+                {
+                    frame_started = 1; // begin receiving frame data
                     received = 0;        // no rows received
                 }
-            } 
+            }
             else
             {
                 if (received < 64) // full cube data still not processed
@@ -348,14 +348,14 @@ void main()
                     display[temp][received/8][received%8] = value;
                     received++; // one more row/byte received
                 }
-                
+
                 if (received >= 64) // full cube info received
                 {
                     swap();                      // show leds lights
                     frame_started = 0; // need new frame data
                 }
             }
-        } 
+        }
         else
         {
             // run default animation if no UART commands
@@ -375,19 +375,19 @@ void print() __interrupt (1) // timer0 interrupt
 {
     uchar y;
     P1 = 0;
-    
+
     // update one layer at a time
-    for (y=0; y<8; y++) 
+    for (y=0; y<8; y++)
     {
         P2 = 1<<y;
         delay(3);
         P0 = display[frame][layer][y]; // shift every layer byte
         delay(3);
     }
-    
+
     P1 = 1<<layer;
     layer = (layer+1)%8; // rewind - ensure we loop in 0-7 layers
-    
+
     // reset timer0
     TH0 = 0xc0;
     TL0 = 0;
