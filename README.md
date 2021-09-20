@@ -63,3 +63,6 @@ LED Cube control
 
 The cube (with Firmware v2) can be controlled over serial port/console with: [PC Program](https://github.com/tomazas/DotMatrixJava). </br>
 Program allows to create animations and playback them.
+
+Another program which can play animations, and has a music visualizer: [8x8x8 LED Cube](https://github.com/Sliicy/8x8x8-LED)
+![Music Visualizer](https://raw.githubusercontent.com/Sliicy/8x8x8-LED/master/Screenshots/Music.gif)
